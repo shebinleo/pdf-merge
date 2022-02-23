@@ -79,9 +79,7 @@ module.exports = (files, options) => new Promise((resolve, reject) => {
     }
   }
 
-  const tmpFilePath = isWindows
-    ? tmp.tmpNameSync()
-    : shellescape([tmp.tmpNameSync()]);
+  const tmpFilePath = options.outputFilePath || (isWindows ? tmp.tmpNameSync() : shellescape([tmp.tmpNameSync()]));
 
   const inputPws = []
   const args = files.map((value, idx) => {
@@ -114,6 +112,14 @@ module.exports = (files, options) => new Promise((resolve, reject) => {
   const childPromise = (isWindows && options.libPath !== 'pdftk')
     ? execFile(options.libPath, args)
     : exec(`${options.libPath} ${args.join(' ')}`);
+
+  if (options.skipBuffer) {
+    childPromise
+    .then(resolve)
+    .catch(reject);
+
+    return;
+  }
 
   childPromise
     .then(() =>
